@@ -4,6 +4,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/*
+    --------------------------------------------------------------------------
+    DRAFT CONSTRUCTOR
+    --------------------------------------------------------------------------
+
+    constructor(
+        address[] memory _committeeMembers,
+        uint256 _requiredYesVotes,
+        uint256 _votingDuration
+    ) {
+        // Initialize committee members
+        for (uint256 i = 0; i < _committeeMembers.length; i++) {
+            committee[_committeeMembers[i]] = true;
+        }
+
+        // Required YES votes to approve a scholarship
+        requiredYesVotes = _requiredYesVotes;
+
+        // Length of time students can be voted on (in seconds)
+        votingDuration = _votingDuration;
+    }
+*/
+
 /// @title IScholarshipFund
 /// @notice Interface for a decentralized scholarship distribution system.
 interface IScholarshipFund {
