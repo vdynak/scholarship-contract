@@ -47,6 +47,25 @@ contract Scholarship{
     // Used to enforce the 3-day voting window: no votes allowed after (roundStartTime + votingDuration).
     uint256 public roundStartTime;
 
+    constructor(address[] memory _committee, uint256 _requiredVotes) payable {
+        require(_committee.length > 0, "Need at least one committee member");
+        require(_requiredVotes > 0, "requiredVotes must be > 0");
+        require(msg.value >= 0.01 ether, "Seed of at least 0.01 ETH required");
+
+        for (uint256 i = 0; i < _committee.length; i++) {
+            require(_committee[i] != address(0), "Invalid committee member");
+            require(!isCommittee[_committee[i]], "Duplicate committee member");
+            isCommittee[_committee[i]] = true;
+            committeeCount++;
+        }
+
+        requiredVotes = _requiredVotes;
+        currentRound = 1;
+        roundStartTime = block.timestamp;
+
+        emit NewRoundStarted(currentRound);
+    }
+
 
     
     
