@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 contract Scholarship{
     event Donated(address indexed donor, uint256 amount);
-    event ApplicationSubmitted(uint256 indexed round, uint 256 indexed appId, address indexed applicant, string ipfsHash);
+    event ApplicationSubmitted(uint256 indexed round, uint256 indexed appId, address indexed applicant, string ipfsHash);
     event VoteCast(uint256 indexed round, uint256 indexed appId, address indexed committeeMember);
     event WinnerSelected(uint256 indexed round, address indexed winner, uint256 amountAwarded);
     event NewRoundStarted(uint256 indexed newRound);
@@ -51,7 +51,7 @@ contract Scholarship{
     uint256 public currentRound;
 
     // The timestamp marking when the current round began.
-    // Used to enforce the 3-day voting window: no votes allowed after (roundStartTime + votingDuration).
+    // Used with applicationDuration + votingDuration to enforce timing of each phase.
     uint256 public roundStartTime;
 
     constructor(address[] memory _committee) payable {
@@ -198,6 +198,52 @@ contract Scholarship{
         require(sent, "Transfer failed");
 
         emit WinnerSelected(currentRound, winner.applicant, amount);
+    }
+
+    // last part - redo of the process, next round starts
+    // currentRound ++; should start a fresh storage index, where old apps and votes do not roll over
+    // manual next round by committee member to avoid accidental new rounds, buffer/review time allowed
+    function startNextRound() external{
+        require(isCommittee[msg.sender], "Only committee can start next round");
+        require(phase == RoundPhase.Closed, "Current round not finished");
+        currentRound++;
+    
+        // reset phase + time
+        phase = RoundPhase.Applications;
+        roundStartTime = block.timestamp;
+    
+        emit NewRoundStarted(currentRound);
+    }
+
+    // maintenance functions
+    function getApplication(uint256 round, uint256 appId)
+        external
+        view
+        returns (Application memory)
+    {
+        return applications[round][appId];
+    }
+
+    function getRoundInfo()
+        external
+        view
+        returns(
+            uint256 round,
+            RoundPhase currentPhase,
+            uint256 appsCount,
+            uint256 startTime,
+            bool hasWinner,
+            address winner
+        )
+    {
+        return(
+            currentRound,
+            phase,
+            applicationsCountByRound[currentRound],
+            roundStartTime,
+            roundHasWinner[currentRound],
+            roundWinner[currentRound]
+        );
     }
         
     
