@@ -7,6 +7,7 @@ contract Scholarship{
     event VoteCast(uint256 indexed round, uint256 indexed appId, address indexed committeeMember);
     event WinnerSelected(uint256 indexed round, address indexed winner, uint256 amountAwarded);
     event NewRoundStarted(uint256 indexed newRound);
+    event CommitteeMemberAdded(address indexed newMember);
 
     // committee & config
     mapping(address => bool) public isCommittee;
@@ -213,6 +214,20 @@ contract Scholarship{
         roundStartTime = block.timestamp;
     
         emit NewRoundStarted(currentRound);
+    }
+
+    function addCommitteeMember(address newMember) external{
+        // only an existing committee member can add a new one
+        require(isCommittee[msg.sender], "Only committee can add members");
+    
+        // validate new member address
+        require(newMember != address(0), "Invalid address");
+        require(!isCommittee[newMember], "Already a committee member");
+    
+        // add the new committee member
+        isCommittee[newMember] = true;
+        committeeCount++;
+        emit CommitteeMemberAdded(newMember);
     }
 
     // maintenance functions
