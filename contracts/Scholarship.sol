@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 contract Scholarship{
-    event Donated(address indexed donor, unit256 amount);
+    event Donated(address indexed donor, uint256 amount);
     event ApplicationSubmitted(uint256 indexed round, uint 256 indexed appId, address indexed applicant, string ipfsHash);
     event VoteCast(uint256 indexed round, uint256 indexed appId, address indexed committeeMember);
     event WinnerSelected(uint256 indexed round, address indexed winner, uint256 amountAwarded);
@@ -11,7 +11,7 @@ contract Scholarship{
     // committee & config
     mapping(address => bool) public isCommittee;
     uint256 public committeeCount;
-    uint256 public requiredVotes;
+    //uint256 public requiredVotes;
     uint256 public applicationDuration = 3 days;
     uint256 public votingDuration = 1 days;
 
@@ -20,7 +20,7 @@ contract Scholarship{
     RoundPhase public phase;
 
     // app data
-    struct Applicatiion{
+    struct Application{
         uint256 id;
         address applicant;
         string ipfsHash;
@@ -54,20 +54,20 @@ contract Scholarship{
     // Used to enforce the 3-day voting window: no votes allowed after (roundStartTime + votingDuration).
     uint256 public roundStartTime;
 
-    constructor(address[] memory _committee, uint256 _requiredVotes) payable {
-        require(_committee.length > 0, "Need at least one committee member");
-        require(_requiredVotes > 0, "requiredVotes must be > 0");
-        require(_committee.length >= _requiredVotes, "Not enough committee to reach required votes");
+    constructor(address[] memory _committee) payable {
+        require(_committee.length >= 2, "At least 2 committee members required");
+        //require(_requiredVotes > 0, "requiredVotes must be > 0");
+        //require(_committee.length >= _requiredVotes, "Not enough committee to reach required votes");
         require(msg.value >= 0.01 ether, "Seed of at least 0.01 ETH required");
 
         for (uint256 i = 0; i < _committee.length; i++) {
             require(_committee[i] != address(0), "Invalid committee member");
             require(!isCommittee[_committee[i]], "Duplicate committee member");
             isCommittee[_committee[i]] = true;
-            committeeCount++;
         }
+        committeeCount = _committee.length;
 
-        requiredVotes = _requiredVotes;
+        //requiredVotes = _requiredVotes;
         currentRound = 1;
         roundStartTime = block.timestamp;
         phase = RoundPhase.Applications;
@@ -99,10 +99,10 @@ contract Scholarship{
         require(!hasApplied[currentRound][msg.sender], "You have already applied this round");
         
         // take the number of apps already submitted and increment by 1
-        uint256 newID = applicationsCountByRound[currentRound] + 1;
+        uint256 newId = applicationsCountByRound[currentRound] + 1;
         applicationsCountByRound[currentRound] = newId;
 
-        applications[currentRound][newId] = Application([
+        applications[currentRound][newId] = Application({
             id: newId,
             applicant: msg.sender,
             ipfsHash: ipfsHash,
@@ -114,9 +114,20 @@ contract Scholarship{
         emit ApplicationSubmitted(currentRound, newId, msg.sender, ipfsHash);
     }
 
-    // voting logic next, winner = first to 10 votes in 3 days, if surpassed, then first to recieve the most amount of votes, in case of tie: ??
+    // voting logic next, voting logic: winner = application with the most votes after voting period ends
     function startVoting() external{
-    // will need as transition from app period to voting period
+        require(isCommittee[msg.sender], "Only committee can open voting");
+
+        // moving from app to voting
+        require(phase == RoundPhase.Applications, "Application phase already closed");
+
+        // the 3-day app period is over
+        require(block.timestamp > roundStartTime + applicationDuration, "Application period not finished");
+
+        // at least 1 application exists
+        require(applicationsCountByRound[currentRound] > 0, "No applications submitted");
+
+        phase = RoundPhase.Voting;
     }
 
     function vote(uint256 appId) external{
