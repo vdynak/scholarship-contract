@@ -194,7 +194,7 @@ contract Scholarship{
         // transfer full balance; winner.applicant --> wallet addr of winner, "" --> empty data payload because we're not calling a func
         // bool - success?, bytes --> not needed so _
         (bool sent, ) = winner.applicant.call{value: amount}("");
-        / constraint: if winner addr is a contract that rejects, gas issue, balance mismatch, something --> the selectWinner() trans reverts, not recorded, funds still locked
+        // constraint: if winner addr is a contract that rejects, gas issue, balance mismatch, something --> the selectWinner() trans reverts, not recorded, funds still locked
         require(sent, "Transfer failed");
 
         emit WinnerSelected(currentRound, winner.applicant, amount);
