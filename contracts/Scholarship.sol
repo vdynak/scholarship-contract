@@ -116,20 +116,23 @@ contract Scholarship{
     }
 
     // voting logic next, voting logic: winner = application with the most votes after voting period ends
-    function startVoting() external{
+    function startVoting() external {
         require(isCommittee[msg.sender], "Only committee can open voting");
 
-        // moving from app to voting
+    // moving from app to voting
         require(phase == RoundPhase.Applications, "Application phase already closed");
 
-        // the 3-day app period is over
-        require(block.timestamp > roundStartTime + applicationDuration, "Application period not finished");
+    // --- DISABLED TIME CHECK FOR DEMO ---
+    // require(
+    //     block.timestamp > roundStartTime + applicationDuration,
+    //     "Application period not finished"
+    // );
 
-        // at least 1 application exists
+    // at least 1 application exists
         require(applicationsCountByRound[currentRound] > 0, "No applications submitted");
 
         phase = RoundPhase.Voting;
-    }
+}
 
     function vote(uint256 appId) external{
         require(phase == RoundPhase.Voting, "Voting period is not active");
